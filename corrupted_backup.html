@@ -1,0 +1,2330 @@
+<!DOCTYPE html>
+<!--                 console.error(message); -->
+<!--                 alert(message); -->
+<!--                 return false; -->
+<!--             } -->
+<!--             return true; -->
+<!--         } -->
+<!--  -->
+<!--         // Check for WebGL errors -->
+<!--         function checkWebGLErrors() { -->
+<!--             const gl = document.createElement('canvas').getContext('webgl'); -->
+<!--             if (gl) { -->
+<!--                 const error = gl.getError(); -->
+<!--                 if (error !== gl.NO_ERROR) { -->
+<!--                     const message = 'WebGL error detected: ' + error; -->
+<!--                     console.error(message); -->
+<!--                     alert(message); -->
+<!--                 } -->
+<!--             } -->
+<!--         } -->
+<!--     </script> -->
+<!--                 console.error(message); -->
+<!--                 const debugEl = document.getElementById('debug'); -->
+<!--                 if (debugEl) { -->
+<!--                     debugEl.innerHTML = message; -->
+<!--                     debugEl.style.color = '#ff4444'; -->
+<!--                 } -->
+<!--             } -->
+<!--         } -->
+<!--  -->
+<!--         // Initialize error handling and performance monitoring -->
+<!--         window.addEventListener('load', () => { -->
+<!--             document.querySelectorAll('script, link').forEach(el => { -->
+<!--                 el.addEventListener('error', handleResourceError); -->
+<!--             }); -->
+<!--             checkWebGL(); -->
+<!--         }); -->
+<!--     </script> -->
+<!--  -->
+<!-- </body> -->
+<!-- </html> -->
+<!DOCTYPE html>
+<!-- This HTML document contains a MapLibre GL JS implementation with a road pulse animation and enhanced visual effects -->
+<!-- The code includes various features such as performance monitoring, error handling, and mandala animations -->
+<!-- It is structured to provide a clear separation of concerns between the HTML structure, CSS styles, and JavaScript logic -->
+<!-- The JavaScript code is modularized to enhance readability and maintainability -->
+<!-- The page is designed to be responsive and visually appealing, with a focus on user interaction and performance optimization -->
+<!-- The document uses ES6 syntax and modern JavaScript features for better code organization and clarity -->
+<!-- The CSS styles are designed to create a visually engaging experience with animations and transitions -->
+
+<!-- HTML structure -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MapLibre GL JS Road Pulse Animation</title>
+   <script src='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js'></script>
+   <link href='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css' rel='stylesheet' />
+   <style>
+       /* Base styles */
+       body { margin: 0; padding: 0; background: #0A0E17; }
+       #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+       
+       /* Container styles */
+       .mandala-container {
+           position: absolute;
+           pointer-events: none;
+       }
+       
+       /* Shape styles */
+       .layer {
+           position: absolute;
+           width: 100%;
+           height: 100%;
+           transform-origin: center;
+       }
+       
+       .shape {
+           position: absolute;
+           transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+           background-color: rgba(255, 255, 255, 0.92);
+           mix-blend-mode: screen;
+           filter: blur(0.3px) brightness(1.05);
+           box-shadow:
+               0 0 5px rgba(255, 255, 255, 0.4),
+               0 0 15px rgba(255, 255, 255, 0.2);
+           animation: glow 3s ease-in-out infinite;
+           will-change: transform, opacity, filter;
+       }
+       
+       .shape:hover {
+           animation-duration: 2s;
+           filter: blur(0.2px) brightness(1.2);
+       }
+
+       /* Animations */
+       @keyframes rotate {
+           from { transform: rotate(0deg) scale(0.92) translateZ(0); }
+           to { transform: rotate(360deg) scale(1) translateZ(15px); }
+       }
+
+       @keyframes reverse-rotate {
+           from { transform: rotate(0deg) scale(1.05) translateZ(5px); }
+           to { transform: rotate(360deg) scale(0.95) translateZ(-5px); }
+       }
+
+       @keyframes pulse {
+           from { transform: scale(0.95) rotate(0deg) translateZ(0px); }
+           to { transform: scale(1.15) rotate(0deg) translateZ(20px); }
+       }
+
+       @keyframes flow {
+           from { transform: translateY(-4px) scale(0.95) translateZ(0) rotate(-1deg); }
+           to { transform: translateY(4px) scale(1.08) translateZ(20px) rotate(1deg); }
+       }
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MapLibre Road Pulse Animation</title>
+   <script src='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js'></script>
+   <link href='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css' rel='stylesheet' />
+   <style>
+       /* Base styles */
+       body { margin: 0; padding: 0; background: #0A0E17; }
+       #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+       
+       /* Container styles */
+       .mandala-container {
+           position: absolute;
+           pointer-events: none;
+       }
+       
+       /* Shape styles */
+       .layer {
+           position: absolute;
+           width: 100%;
+           height: 100%;
+           transform-origin: center;
+       }
+       
+       .shape {
+           position: absolute;
+           transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+           background-color: rgba(255, 255, 255, 0.92);
+           mix-blend-mode: screen;
+           filter: blur(0.3px) brightness(1.05);
+           box-shadow:
+               0 0 5px rgba(255, 255, 255, 0.4),
+               0 0 15px rgba(255, 255, 255, 0.2);
+           animation: glow 3s ease-in-out infinite;
+           will-change: transform, opacity, filter;
+       }
+       
+       .shape:hover {
+           animation-duration: 2s;
+           filter: blur(0.2px) brightness(1.2);
+       }
+
+       /* Animations */
+       @keyframes rotate {
+           0% {
+               transform: rotate(0deg) scale(0.92) translateZ(0);
+               filter: brightness(1.1) blur(0.2px);
+               opacity: 0.9;
+           }
+           25% {
+               transform: rotate(90deg) scale(1) translateZ(15px);
+               filter: brightness(1.2) blur(0.1px);
+               opacity: 1;
+           }
+           50% {
+               transform: rotate(180deg) scale(1.08) translateZ(30px);
+               filter: brightness(1.3) blur(0px);
+               opacity: 1;
+           }
+           75% {
+               transform: rotate(270deg) scale(1) translateZ(15px);
+               filter: brightness(1.2) blur(0.1px);
+               opacity: 1;
+           }
+           100% {
+               transform: rotate(360deg) scale(0.92) translateZ(0);
+               filter: brightness(1.1) blur(0.2px);
+               opacity: 0.9;
+           }
+       }
+
+       @keyframes reverse-rotate {
+           0% {
+               transform: rotate(360deg) scale(1.05) translateZ(5px);
+               filter: brightness(1.05);
+           }
+           50% {
+               transform: rotate(180deg) scale(0.95) translateZ(-5px);
+               filter: brightness(0.95);
+           }
+           100% {
+               transform: rotate(0deg) scale(1.05) translateZ(5px);
+               filter: brightness(1.05);
+           }
+       }
+
+       @keyframes pulse {
+           0% {
+               transform: scale(0.95) rotate(0deg) translateZ(0px);
+               opacity: 0.85;
+               filter: brightness(1.1) blur(0.3px);
+               box-shadow: 0 0 10px rgba(255,255,255,0.3);
+           }
+           50% {
+               transform: scale(1.15) rotate(0deg) translateZ(20px);
+               opacity: 1;
+               filter: brightness(1.5) blur(0px);
+               box-shadow: 0 0 30px rgba(255,255,255,0.7);
+           }
+           100% {
+               transform: scale(0.95) rotate(0deg) translateZ(0px);
+               opacity: 0.85;
+               filter: brightness(1.1) blur(0.3px);
+               box-shadow: 0 0 10px rgba(255,255,255,0.3);
+           }
+       }
+
+       @keyframes flow {
+           0% {
+               transform: translateY(-4px) scale(0.95) translateZ(0) rotate(-1deg);
+               filter: brightness(1.2) blur(0.2px);
+               opacity: 0.9;
+               box-shadow: 0 0 15px rgba(255,255,255,0.4);
+           }
+           100% {
+               transform: translateY(4px) scale(1.08) translateZ(20px) rotate(1deg);
+               filter: brightness(1.6) blur(0px);
+               opacity: 1;
+               box-shadow: 0 0 35px rgba(255,255,255,0.8);
+           }
+       }
+   </style>
+   <script>
+       // Performance configuration
+       const PERFORMANCE_CONFIG = {
+           targetFps: 17,
+           memoryThresholds: {
+               critical: 0.8,
+               low: 0.5
+           }
+       };
+
+       // MandalaManager class definition
+       class MandalaManager {
+           constructor(map) {
+               this.map = map;
+               this.mandalas = new Map();
+               this.container = document.createElement('div');
+               this.container.className = 'mandala-container';
+               this.map.getContainer().appendChild(this.container);
+
+               // Performance monitoring
+               this.memoryMode = 'normal';
+               this.frameInterval = 1000 / PERFORMANCE_CONFIG.targetFps;
+               this.lastUpdate = performance.now();
+               
+               console.log('MandalaManager initialized with performance monitoring');
+               
+               // Bind methods
+               this.update = this.update.bind(this);
+               this.cleanup = this.cleanup.bind(this);
+               this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
+
+               // Initialize visibility change listener
+               document.addEventListener('visibilitychange', this.handleVisibilityChange);
+
+               // Start update loop
+               this.isActive = true;
+               this.update();
+            }
+            100% {
+                transform: rotate(0deg) scale(1.05) translateZ(5px);
+                filter: brightness(1.05);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95) rotate(0deg) translateZ(0px);
+                opacity: 0.85;
+                filter: brightness(1.1) blur(0.3px);
+                box-shadow: 0 0 10px rgba(255,255,255,0.3);
+            }
+            25% {
+                transform: scale(1.05) rotate(2deg) translateZ(10px);
+                opacity: 0.95;
+                filter: brightness(1.3) blur(0.1px);
+                box-shadow: 0 0 20px rgba(255,255,255,0.5);
+            }
+            50% {
+                transform: scale(1.15) rotate(0deg) translateZ(20px);
+                opacity: 1;
+                filter: brightness(1.5) blur(0px);
+                box-shadow: 0 0 30px rgba(255,255,255,0.7);
+            }
+            75% {
+                transform: scale(1.05) rotate(-2deg) translateZ(10px);
+                opacity: 0.95;
+                filter: brightness(1.3) blur(0.1px);
+                box-shadow: 0 0 20px rgba(255,255,255,0.5);
+            }
+            100% {
+                transform: scale(0.95) rotate(0deg) translateZ(0px);
+                opacity: 0.85;
+                filter: brightness(1.1) blur(0.3px);
+                box-shadow: 0 0 10px rgba(255,255,255,0.3);
+            }
+        }
+@keyframes flow {
+    0% {
+        transform: translateY(-4px) scale(0.95) translateZ(0) rotate(-1deg);
+        filter: brightness(1.2) blur(0.2px);
+        opacity: 0.9;
+        box-shadow: 0 0 15px rgba(255,255,255,0.4);
+    }
+    33% {
+        transform: translateY(0px) scale(1.02) translateZ(10px) rotate(0deg);
+        filter: brightness(1.4) blur(0.1px);
+        opacity: 1;
+        box-shadow: 0 0 25px rgba(255,255,255,0.6);
+    }
+    66% {
+        transform: translateY(4px) scale(1.08) translateZ(20px) rotate(1deg);
+        filter: brightness(1.6) blur(0px);
+        opacity: 1;
+        box-shadow: 0 0 35px rgba(255,255,255,0.8);
+    }
+    100% {
+        transform: translateY(-4px) scale(0.95) translateZ(0) rotate(-1deg);
+        filter: brightness(1.2) blur(0.2px);
+        opacity: 0.9;
+        box-shadow: 0 0 15px rgba(255,255,255,0.4);
+    }
+}
+
+@keyframes glow {
+    0% {
+        filter: brightness(1.2) blur(0.2px);
+        opacity: 0.9;
+        box-shadow: 0 0 20px rgba(255,255,255,0.4);
+    }
+    50% {
+        filter: brightness(1.5) blur(0px);
+        opacity: 1;
+        box-shadow: 0 0 40px rgba(255,255,255,0.7);
+    }
+    100% {
+        filter: brightness(1.2) blur(0.2px);
+        opacity: 0.9;
+        box-shadow: 0 0 20px rgba(255,255,255,0.4);
+    }
+}
+
+// Debug logging
+function logMandalaState(mandala, zoom, scale, opacity) {
+    const now = new Date().toLocaleTimeString();
+    log(`[${now}] ${mandala}: zoom=${zoom.toFixed(2)}, scale=${scale.toFixed(2)}, opacity=${opacity.toFixed(2)}`);
+}
+
+
+    <style>
+        body { margin: 0; padding: 0; background: #0A0E17; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        #debug {
+            position: absolute;
+            bottom: 40px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ff99;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-width: 400px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 2;
+        }
+        .map-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, transparent 0%, rgba(10, 14, 23, 0.3) 100%);
+            pointer-events: none;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="debug"></div>
+    <div class="map-overlay"></div>
+
+    <script>
+        // Configuration
+// Mandala Configuration
+const DELHI_LANDMARKS = [
+    {
+        name: "Parliament House",
+        coordinates: [77.2097, 28.6172],
+        radius: 400,
+        rotationSpeed: 45,  // seconds per rotation
+        baseOpacity: 0.15
+    },
+    {
+        name: "Akshardham Temple",
+        coordinates: [77.2772, 28.6127],
+        radius: 380,
+        rotationSpeed: 40,
+        baseOpacity: 0.15
+    },
+    {
+        name: "Lotus Temple",
+        coordinates: [77.2588, 28.5535],
+        radius: 360,
+        rotationSpeed: 38,
+        baseOpacity: 0.15
+    },
+    {
+        name: "Chhatarpur Temple",
+        coordinates: [77.1750, 28.5073],
+        radius: 340,
+        rotationSpeed: 35,
+        baseOpacity: 0.15
+    },
+    {
+        name: "Kalkaji Temple",
+        coordinates: [77.2582, 28.5485],
+        radius: 320,
+        rotationSpeed: 33,
+        baseOpacity: 0.15
+    }
+];
+
+// Mandala SVG Templates
+const MANDALA_TEMPLATES = {
+    outerRing: `
+        <g class="mandala-outer-ring">
+            ${Array(144).fill().map((_, i) => `
+                <circle 
+                    cx="0" 
+                    cy="-190" 
+                    r="2" 
+                    transform="rotate(${i * 2.5})"
+                />
+            `).join('')}
+        </g>
+    `,
+    middleRing: `
+        <g class="mandala-middle-ring">
+            ${Array(72).fill().map((_, i) => `
+                <path 
+                    d="M 0,-140 L 5,-130 L -5,-130 Z" 
+                    transform="rotate(${i * 5})"
+                />
+            `).join('')}
+        </g>
+    `,
+    innerRing: `
+        <g class="mandala-inner-ring">
+            ${Array(36).fill().map((_, i) => `
+                <rect 
+                    x="-4" 
+                    y="-90" 
+                    width="8" 
+                    height="8" 
+                    transform="rotate(${i * 10})"
+                />
+            `).join('')}
+        </g>
+    `,
+    centerCore: `
+        <g class="mandala-center-core">
+            <circle cx="0" cy="0" r="30" class="core-circle" />
+            <path d="M -20,-20 L 20,20 M -20,20 L 20,-20" class="core-lines" />
+        </g>
+    `
+};
+
+        const API_KEY = 'eMlvVXakunuIUacC1sWQ';
+        const DELHI_COORDINATES = [77.2090, 28.6139];
+        const debugEl = document.getElementById('debug');
+
+        // Enhanced road configuration
+        const ROAD_CONFIG = {
+            motorway: {
+                filter: ['==', ['get', 'class'], 'motorway'],
+                color: '#00FFFF',  // Cyan
+                width: 3,
+                glow: { width: 12, opacity: 0.4, blur: 8 }
+            },
+            trunk: {
+                filter: ['==', ['get', 'class'], 'trunk'],
+                color: '#FF00FF',  // Magenta
+                width: 2.5,
+                glow: { width: 10, opacity: 0.35, blur: 7 }
+            },
+            primary: {
+                filter: ['==', ['get', 'class'], 'primary'],
+                color: '#FFFF00',  // Yellow
+                width: 2,
+                glow: { width: 8, opacity: 0.3, blur: 6 }
+            },
+            secondary: {
+                filter: ['==', ['get', 'class'], 'secondary'],
+                color: '#00FF99',  // Neon green
+                width: 1.8,
+                glow: { width: 7, opacity: 0.25, blur: 5 }
+            },
+            tertiary: {
+                filter: ['==', ['get', 'class'], 'tertiary'],
+                color: '#4D4DFF',  // Bright blue
+                width: 1.5,
+                glow: { width: 6, opacity: 0.2, blur: 4 }
+            },
+            residential: {
+                filter: ['==', ['get', 'class'], 'residential'],
+                color: '#3366FF',  // Soft blue
+                width: 1.2,
+                glow: { width: 4, opacity: 0.15, blur: 3 }
+            },
+            service: {
+                filter: ['==', ['get', 'class'], 'service'],
+                color: '#3399FF',  // Light blue
+                width: 1,
+                glow: { width: 3, opacity: 0.1, blur: 2 }
+            },
+            minor: {
+                filter: ['==', ['get', 'class'], 'minor'],
+                color: '#66B2FF',  // Very light blue
+                width: 0.8,
+                glow: { width: 2, opacity: 0.08, blur: 1.5 }
+            },
+            path: {
+                filter: ['==', ['get', 'class'], 'path'],
+                color: '#99CCFF',  // Pale blue
+                width: 0.6,
+                glow: { width: 1.5, opacity: 0.05, blur: 1 }
+            }
+        };
+
+        // Enhanced pulse configuration
+        const PULSE_CONFIG = {
+            colors: {
+                primary: '#E63946',  // Matching motorway color
+                secondary: [
+                    '#2A9D8F',  // Teal
+                    '#457B9D',  // Steel blue
+                    '#F4A261',  // Muted orange
+                    '#264653',  // Dark slate
+                    '#48CAE4'   // Light blue
+                ]
+            },
+            heartbeat: {
+                duration: {
+                    min: 1200,     // Slower, more elegant pulse
+                    max: 2400      // Maximum duration
+                },
+                speed: {
+                    min: 0.0002,   // Slower base speed
+                    max: 0.0004    // Maximum speed
+                }
+            },
+            trail: {
+                length: 16,       // Longer trails for smoother effect
+                fadeSteps: 12,    // More fade steps
+                maxOpacity: 0.3   // Lower opacity for subtlety
+            },
+            spawn: {
+                interval: {
+                    min: 800,     // Slower spawn rate
+                    max: 2000     // Maximum interval
+                },
+                maxActive: 20,    // Fewer pulses for cleaner look
+                initialPulseCount: 3,
+                maxPulsesPerRoad: 2,
+                distribution: {
+                    motorway: 0.25,   // Major highways
+                    trunk: 0.20,      // Important arterial roads
+                    primary: 0.15,    // Main roads
+                    secondary: 0.12,   // Secondary roads
+                    tertiary: 0.10,   // Tertiary roads
+                    residential: 0.08, // Residential streets
+                    service: 0.05,    // Service roads
+                    minor: 0.03,      // Minor roads
+                    path: 0.02        // Paths and tracks
+                }
+            },
+            performance: {
+                targetFps: 60,
+                minFps: 30,
+                maxMemoryMB: 200,
+                batchSize: 5
+            }
+        };
+
+        function log(message) {
+            console.log(message);
+            debugEl.innerHTML = `${message}<br>${debugEl.innerHTML}`;
+            if (debugEl.innerHTML.length > 5000) {
+                debugEl.innerHTML = debugEl.innerHTML.substring(0, 5000);
+            }
+            if (message.toLowerCase().includes('error')) {
+                debugEl.style.color = '#ff4444';
+                setTimeout(() => { debugEl.style.color = '#00ff99'; }, 1000);
+            }
+        }
+
+        class Trail {
+            constructor(position, opacity, color) {
+                this.position = position;
+                this.opacity = opacity;
+                this.color = color;
+            }
+        }
+
+        class RoadPulse {
+            constructor(roadId, roadType) {
+                this.roadId = roadId;
+                this.roadType = roadType;
+                this.trail = [];
+                this.colorIndex = Math.floor(Math.random() * PULSE_CONFIG.colors.secondary.length);
+                this.lastUpdate = performance.now();
+                this.reset();
+            }
+
+            reset() {
+                this.progress = Math.random();
+                this.direction = Math.random() > 0.5 ? 1 : -1;
+                this.speed = PULSE_CONFIG.heartbeat.speed.min +
+                    Math.random() * (PULSE_CONFIG.heartbeat.speed.max - PULSE_CONFIG.heartbeat.speed.min);
+                this.duration = PULSE_CONFIG.heartbeat.duration.min +
+                    Math.random() * (PULSE_CONFIG.heartbeat.duration.max - PULSE_CONFIG.heartbeat.duration.min);
+                this.nextColorChange = this.duration * (0.5 + Math.random() * 0.5);
+                this.updateColor();
+            }
+
+            updateColor() {
+                // Enhanced color cycling with smooth transitions
+                this.colorIndex = (this.colorIndex + 1) % PULSE_CONFIG.colors.secondary.length;
+                this.color = PULSE_CONFIG.colors.secondary[this.colorIndex];
+                this.nextColorChange = this.duration * (0.5 + Math.random() * 0.5);
+            }
+
+            update(deltaTime) {
+                // Time-based color updates
+                this.nextColorChange -= deltaTime;
+                if (this.nextColorChange <= 0) {
+                    this.updateColor();
+                }
+
+                // Update trail
+                if (this.trail.length >= PULSE_CONFIG.trail.length) {
+                    this.trail.pop();
+                }
+
+                // Create new trail segment
+                const opacity = this.getHeartbeatOpacity();
+                this.trail.unshift(new Trail(
+                    this.progress,
+                    opacity,
+                    this.color
+                ));
+
+                // Update position
+                const progressDelta = this.speed * deltaTime * this.direction;
+                this.progress += progressDelta;
+
+                // Handle path completion
+                if (this.progress > 1 || this.progress < 0) {
+                    this.reset();
+                }
+
+                return {
+                    progress: this.progress,
+                    opacity: opacity,
+                    trail: this.getTrailOpacities(),
+                    direction: this.direction,
+                    color: this.color,
+                    width: this.getHeartbeatWidth()
+                };
+            }
+
+            getHeartbeatOpacity() {
+                const normalizedProgress = (this.progress * 2) % 1;
+                
+                // Enhanced TRON-like pulse pattern
+                const pulse = Math.pow(Math.sin(normalizedProgress * Math.PI), 3);
+                const energyWave = Math.pow(Math.cos(normalizedProgress * Math.PI * 2), 2);
+                const fadeOut = Math.exp(-1.5 * Math.abs(normalizedProgress - 0.5));
+                
+                // Add time-based flicker effect
+                const flicker = 0.85 + Math.random() * 0.3;
+                
+                return Math.min(PULSE_CONFIG.trail.maxOpacity,
+                       Math.max(0.2, (pulse + energyWave * 0.3) * fadeOut * flicker * PULSE_CONFIG.trail.maxOpacity));
+            }
+            getHeartbeatWidth() {
+                const normalizedProgress = (this.progress * 2) % 1;
+                const widthPulse = Math.pow(Math.sin(normalizedProgress * Math.PI), 2);
+                const energyBoost = Math.pow(Math.cos(normalizedProgress * Math.PI * 3), 2) * 0.3;
+                
+                // Add slight randomness for energy effect
+                const energyFlux = 0.9 + Math.random() * 0.2;
+                
+                return (1 + widthPulse * 1.2 + energyBoost) * energyFlux;
+            }
+
+            getTrailOpacities() {
+                return this.trail.map((trail, index) => {
+                    // Enhanced trail fade with energy wave
+                    const fadeRatio = Math.pow(1 - (index / PULSE_CONFIG.trail.length), 1.2);
+                    const energyWave = Math.pow(Math.cos(index * Math.PI / 8), 2) * 0.3;
+                    
+                    return {
+                        opacity: trail.opacity * (fadeRatio + energyWave),
+                        color: trail.color
+                    };
+                });
+            }
+        }
+
+        class RoadAnimationManager {
+            constructor(map) {
+                this.map = map;
+                this.isActive = false;
+                this.animationFrame = null;
+                this.lastTimestamp = 0;
+                this.pulses = new Map();
+                this.pulsesPerRoad = new Map();
+                this.layerIds = [];
+                this.boundAnimate = this.animate.bind(this);
+                this.boundSpawnPulse = this.spawnPulse.bind(this);
+                this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
+                this.cleanupInterval = null;
+                this.nextBatchUpdate = 0;
+                this.batchIndex = 0;
+                this.frameCount = 0;
+                this.lastFpsUpdate = 0;
+                this.viewportBounds = this.getViewportBounds();
+                
+                // Bind event handlers
+                this.handleMapMove = this.handleMapMove.bind(this);
+                this.cleanupOffscreenPulses = this.cleanupOffscreenPulses.bind(this);
+                
+                // Setup map event listeners
+                map.on('move', this.handleMapMove);
+                this.fps = 0;
+            }
+
+            initialize() {
+                try {
+                    log('Initializing road animation...');
+                    
+                    // Add base road layers and glow effects
+                    Object.entries(ROAD_CONFIG).forEach(([roadType, config]) => {
+                        try {
+                            log(`Setting up layers for road type: ${roadType}`);
+                            
+                            // Validate config
+                            if (!config.color || !config.width || !config.glow) {
+                                throw new Error(`Invalid configuration for ${roadType}`);
+                            }
+                            
+                            // Log layer creation attempts
+                            log(`Creating layers for ${roadType}:
+- Base layer: road-${roadType}
+- Inner glow: road-${roadType}-inner-glow
+- Outer glow: road-${roadType}-outer-glow`);
+                            // Core road layer
+                            const baseLayer = {
+                                id: `road-${roadType}`,
+                                type: 'line',
+                                source: 'openmaptiles',
+                                'source-layer': 'transportation',
+                                filter: config.filter,
+                                layout: {
+                                    'line-cap': 'round',
+                                    'line-join': 'round',
+                                    'visibility': 'visible'
+                                },
+                                paint: {
+                                    'line-color': [
+                                        'interpolate',
+                                        ['linear'],
+                                        ['zoom'],
+                                        8, this.darkenColor(config.color, 0.6),
+                                        12, config.color,
+                                        16, this.lightenColor(config.color, 0.3)
+                                    ],
+                                    'line-width': [
+                                        'interpolate',
+                                        ['linear'],
+                                        ['zoom'],
+                                        8, config.width * 0.8,
+                                        12, config.width * 1.2,
+                                        16, config.width * 2
+                                    ],
+                                    'line-blur': [
+                                        'interpolate',
+                                        ['linear'],
+                                        ['zoom'],
+                                        8, 0.5,
+                                        12, 1,
+                                        16, 1.5
+                                    ],
+                                    'line-opacity': [
+                                        'interpolate',
+                                        ['linear'],
+                                        ['zoom'],
+                                        8, 0.8,
+                                        12, 0.9,
+                                        16, 1.0
+                                    ]
+                                }
+                            };
+
+                            // Inner glow effect
+                            const innerGlowLayer = {
+                                id: `road-${roadType}-inner-glow`,
+                                type: 'line',
+                                source: 'openmaptiles',
+                                'source-layer': 'transportation',
+                                filter: config.filter,
+                                layout: {
+                                    'line-cap': 'round',
+                                    'line-join': 'round',
+                                    'visibility': 'visible'
+                                },
+                                paint: {
+                                    'line-color': config.color,
+                                    'line-width': [
+                                        'interpolate',
+                                        ['linear'],
+                                        ['zoom'],
+                                        8, config.width * 1.5,
+                                        12, config.width * 2,
+                                        16, config.width * 3
+                                    ],
+                                    'line-opacity': 0.3,
+                                    'line-blur': 2
+                                }
+                            };
+
+                            // Outer glow effect
+                            const outerGlowLayer = {
+                                id: `road-${roadType}-outer-glow`,
+                                type: 'line',
+                                source: 'openmaptiles',
+                                'source-layer': 'transportation',
+                                filter: config.filter,
+                                layout: {
+                                    'line-cap': 'round',
+                                    'line-join': 'round',
+                                    'visibility': 'visible'
+                                },
+                                paint: {
+                                    'line-color': this.lightenColor(config.color, 0.2),
+                                    'line-width': [
+                                        'interpolate',
+                                        ['linear'],
+                                        ['zoom'],
+                                        8, config.glow.width,
+                                        12, config.glow.width * 1.5,
+                                        16, config.glow.width * 2
+                                    ],
+                                    'line-opacity': 0.15,
+                                    'line-blur': 4
+                                }
+                            };
+try {
+    // Add layers one by one with validation
+    if (!this.map.getSource('openmaptiles')) {
+        throw new Error('Source "openmaptiles" not found');
+    }
+
+    log(`Adding outer glow layer for ${roadType}`);
+    this.map.addLayer(outerGlowLayer);
+
+    log(`Adding inner glow layer for ${roadType}`);
+    this.map.addLayer(innerGlowLayer);
+
+    log(`Adding base layer for ${roadType}`);
+    this.map.addLayer(baseLayer);
+} catch (layerError) {
+    log(`Error adding layers for ${roadType}: ${layerError.message}`);
+    throw layerError;
+}
+
+                            
+                            this.layerIds.push(
+                                baseLayer.id,
+                                innerGlowLayer.id,
+                                outerGlowLayer.id
+                            );
+                            
+                            this.pulsesPerRoad.set(roadType, 0);
+                            log(`Added enhanced layers for ${roadType} with dual glow effect`);
+
+                            // Add pulse layers with enhanced effects
+                            for (let i = 0; i < PULSE_CONFIG.spawn.maxActive; i++) {
+                                const pulseLayer = {
+                                    id: `road-${roadType}-pulse-${i}`,
+                                    type: 'line',
+                                    source: 'openmaptiles',
+                                    'source-layer': 'transportation',
+                                    filter: config.filter,
+                                    layout: {
+                                        'line-cap': 'round',
+                                        'line-join': 'round',
+                                        'visibility': 'visible'
+                                    },
+                                    paint: {
+                                        'line-color': config.color,
+                                        'line-width': [
+                                            'interpolate',
+                                            ['linear'],
+                                            ['zoom'],
+                                            8, config.width * 1.2,
+                                            12, config.width * 1.5,
+                                            16, config.width * 3
+                                        ],
+                                        'line-opacity': 0.8, // Set initial opacity higher
+                                        'line-blur': 2
+                                    }
+                                };
+
+                                log(`Creating pulse layer ${pulseLayer.id} with initial opacity 0.8`);
+
+                                this.map.addLayer(pulseLayer);
+                                this.layerIds.push(pulseLayer.id);
+                            }
+                            log(`Added pulse layers for ${roadType}`);
+
+                            // Create initial pulses with distribution
+                            const pulseCount = Math.floor(PULSE_CONFIG.spawn.initialPulseCount * 
+                                             PULSE_CONFIG.spawn.distribution[roadType]);
+                            for (let i = 0; i < pulseCount; i++) {
+                                this.spawnPulseForRoad(roadType);
+                            }
+                        } catch (error) {
+                            log(`Error adding layers for ${roadType}: ${error.message}`);
+                            console.error(`Error adding layers for ${roadType}:`, error);
+                        }
+                    });
+
+                    log('Road layers initialized');
+                    document.addEventListener('visibilitychange', this.handleVisibilityChange);
+                    this.start();
+                } catch (error) {
+                    log(`Error initializing road animation: ${error.message}`);
+                    console.error('Error initializing road animation:', error);
+                    this.cleanup();
+                }
+            }
+
+            // Color utility functions
+            darkenColor(color, factor) {
+                const r = parseInt(color.substr(1,2), 16);
+                const g = parseInt(color.substr(3,2), 16);
+                const b = parseInt(color.substr(5,2), 16);
+                return `#${Math.round(r * factor).toString(16).padStart(2, '0')}${
+                    Math.round(g * factor).toString(16).padStart(2, '0')}${
+                    Math.round(b * factor).toString(16).padStart(2, '0')}`;
+            }
+
+            lightenColor(color, factor) {
+                const r = parseInt(color.substr(1,2), 16);
+                const g = parseInt(color.substr(3,2), 16);
+                const b = parseInt(color.substr(5,2), 16);
+                return `#${Math.min(255, Math.round(r + (255 - r) * factor)).toString(16).padStart(2, '0')}${
+                    Math.min(255, Math.round(g + (255 - g) * factor)).toString(16).padStart(2, '0')}${
+                    Math.min(255, Math.round(b + (255 - b) * factor)).toString(16).padStart(2, '0')}`;
+            }
+
+            spawnPulseForRoad(roadType) {
+                const currentPulses = this.pulsesPerRoad.get(roadType) || 0;
+                log(`Attempting to spawn pulse for ${roadType}. Current pulses: ${currentPulses}`);
+                
+                if (currentPulses >= PULSE_CONFIG.spawn.maxPulsesPerRoad) {
+                    log(`Maximum pulses reached for ${roadType}`);
+                    return false;
+                }
+
+                const pulseIndex = Math.floor(Math.random() * PULSE_CONFIG.spawn.maxActive);
+                const pulseId = `road-${roadType}-pulse-${pulseIndex}`;
+                log(`Generated pulse ID: ${pulseId}`);
+
+                if (!this.pulses.has(pulseId)) {
+                    const pulse = new RoadPulse(pulseId, roadType);
+                    this.pulses.set(pulseId, pulse);
+                    this.pulsesPerRoad.set(roadType, currentPulses + 1);
+                    log(`Successfully created new pulse for ${roadType}`);
+                    return true;
+                }
+                log(`Pulse ID ${pulseId} already exists`);
+                return false;
+            }
+
+            getViewportBounds() {
+                const bounds = this.map.getBounds();
+                const padding = PULSE_CONFIG.performance.viewportPadding;
+                const sw = bounds.getSouthWest();
+                const ne = bounds.getNorthEast();
+                const latPadding = (ne.lat - sw.lat) * padding;
+                const lngPadding = (ne.lng - sw.lng) * padding;
+                
+                const viewport = {
+                    south: sw.lat - latPadding,
+                    west: sw.lng - lngPadding,
+                    north: ne.lat + latPadding,
+                    east: ne.lng + lngPadding
+                };
+                
+                log(`Viewport updated: ${JSON.stringify(viewport)}`);
+                return viewport;
+            }
+
+            handleMapMove() {
+                this.viewportBounds = this.getViewportBounds();
+            }
+
+            isInViewport(point) {
+                // Always return true for now to debug other issues
+                return true;
+            }
+
+            cleanupOffscreenPulses() {
+                const deleted = [];
+                this.pulses.forEach((pulse, layerId) => {
+                    if (!this.isInViewport(pulse.progress)) {
+                        this.pulses.delete(layerId);
+                        const roadType = layerId.split('-')[1];
+                        this.pulsesPerRoad.set(roadType,
+                            (this.pulsesPerRoad.get(roadType) || 0) - 1);
+                        deleted.push(layerId);
+                    }
+                });
+                if (deleted.length > 0) {
+                    log(`Cleaned up ${deleted.length} off-screen pulses`);
+                }
+            }
+
+            getMaxPulsesForZoom() {
+                const zoom = this.map.getZoom();
+                const threshold = PULSE_CONFIG.performance.progressive.zoomThresholds
+                    .reverse()
+                    .find(t => zoom >= t.zoom);
+                return threshold ? threshold.maxPulses : PULSE_CONFIG.spawn.maxActive;
+            }
+
+            spawnPulse() {
+                if (this.pulses.size >= PULSE_CONFIG.spawn.maxActive) return;
+
+                const roadTypes = Object.keys(ROAD_CONFIG);
+                const availableRoadTypes = roadTypes.filter(roadType =>
+                    (this.pulsesPerRoad.get(roadType) || 0) < PULSE_CONFIG.spawn.maxPulsesPerRoad &&
+                    Math.random() < PULSE_CONFIG.spawn.distribution[roadType]
+                );
+
+                if (availableRoadTypes.length > 0) {
+                    const selectedType = availableRoadTypes[
+                        Math.floor(Math.random() * availableRoadTypes.length)
+                    ];
+                    this.spawnPulseForRoad(selectedType);
+                }
+            }
+
+            animate(timestamp) {
+                if (!this.isActive) return;
+                
+                // Performance monitoring
+                const now = performance.now();
+                const frameTime = now - this.lastTimestamp;
+                if (frameTime > 1000/30) { // Frame took longer than 33ms
+                    log(`Long frame detected: ${Math.round(frameTime)}ms`);
+                }
+                
+                // Memory monitoring
+                if (performance.memory) {
+                    const memoryUsage = performance.memory.usedJSHeapSize / (1024 * 1024);
+                    if (memoryUsage > PULSE_CONFIG.performance.maxMemoryMB * 0.8) {
+                        log(`High memory usage warning: ${Math.round(memoryUsage)}MB`);
+                    }
+                }
+
+                try {
+                    const deltaTime = this.lastTimestamp ? timestamp - this.lastTimestamp : 0;
+                    this.lastTimestamp = timestamp;
+
+                    // FPS calculation
+                    this.frameCount++;
+                    if (timestamp - this.lastFpsUpdate >= 1000) {
+                        this.fps = Math.round((this.frameCount * 1000) / (timestamp - this.lastFpsUpdate));
+                        this.frameCount = 0;
+                        this.lastFpsUpdate = timestamp;
+                        
+                        // Log performance metrics
+                        if (this.frameCount % 60 === 0) {
+                            const avgFrameTime = (timestamp - this.lastFpsUpdate) / this.frameCount;
+                            const memoryUsage = performance.memory ?
+                                Math.round(performance.memory.usedJSHeapSize / (1024 * 1024)) : 'N/A';
+
+                            // Calculate distribution percentages
+                            const totalPulses = Array.from(this.pulsesPerRoad.values())
+                                .reduce((sum, count) => sum + count, 0);
+                            const distribution = Array.from(this.pulsesPerRoad.entries())
+                                .map(([type, count]) => {
+                                    const config = ROAD_CONFIG[type];
+                                    const percentage = ((count / totalPulses) * 100).toFixed(1);
+                                    return `${type}:${count}(${percentage}%)`;
+                                })
+                                .join(', ');
+
+                            log(`Performance and Distribution Metrics:
+- FPS: ${this.fps} (Target: ${PULSE_CONFIG.performance.targetFps})
+- Frame Time: ${Math.round(avgFrameTime)}ms
+- Memory: ${memoryUsage}MB
+- Total Pulses: ${this.pulses.size}/${PULSE_CONFIG.spawn.maxActive}
+- Distribution: ${distribution}
+- Batch Size: ${PULSE_CONFIG.performance.batchSize}`);
+                        }
+                    }
+
+                    // Batch updates for better performance
+                    const batchSize = PULSE_CONFIG.performance.batchSize;
+                    const pulseArray = Array.from(this.pulses.entries());
+                    const startIndex = this.batchIndex * batchSize;
+                    const endIndex = Math.min(startIndex + batchSize, pulseArray.length);
+
+                    // Update current batch
+                    for (let i = startIndex; i < endIndex; i++) {
+                        const [layerId, pulse] = pulseArray[i];
+                        if (!this.map.getLayer(layerId)) continue;
+                        const pulseState = pulse.update(deltaTime);
+
+                        try {
+                            // Basic paint property updates
+                            const updates = [
+                                ['line-color', pulseState.color],
+                                ['line-opacity', pulseState.opacity],
+                                ['line-width', [
+                                    'interpolate',
+                                    ['linear'],
+                                    ['zoom'],
+                                    8, ROAD_CONFIG[pulse.roadType].width * 1.2 * pulseState.width,
+                                    12, ROAD_CONFIG[pulse.roadType].width * 1.5 * pulseState.width,
+                                    16, ROAD_CONFIG[pulse.roadType].width * 3 * pulseState.width
+                                ]]
+
+
+
+                            ];
+
+                            // Log current paint properties before update
+                            if (i === startIndex) {
+                                const currentOpacity = this.map.getPaintProperty(layerId, 'line-opacity');
+                                log(`Current opacity for ${layerId}: ${currentOpacity}`);
+                            }
+
+                            // Apply all updates
+                            updates.forEach(([prop, value]) => {
+                                this.map.setPaintProperty(layerId, prop, value);
+                            });
+
+                            // Update trail effects
+                            pulseState.trail.forEach((trailState, i) => {
+                                const trailBlur = 2 + i * 0.5;
+                                this.map.setPaintProperty(layerId, 'line-blur', trailBlur);
+                                this.map.setPaintProperty(layerId, 'line-opacity',
+                                    trailState.opacity * (1 - i / pulseState.trail.length));
+                            });
+                        } catch (error) {
+                            log(`Error updating pulse ${layerId}: ${error.message}`);
+                            console.error(`Error updating pulse ${layerId}:`, error);
+                        }
+                    }
+
+                    // Move to next batch
+                    this.batchIndex = (this.batchIndex + 1) % Math.ceil(this.pulses.size / batchSize);
+
+                    // Schedule next frame
+                    this.animationFrame = requestAnimationFrame(this.boundAnimate);
+                } catch (error) {
+                    log(`Error in animation frame: ${error.message}`);
+                    console.error('Error in animation frame:', error);
+                    this.stop();
+                }
+            }
+
+            getNextSpawnInterval() {
+                const base = PULSE_CONFIG.spawn.interval.min;
+                const range = PULSE_CONFIG.spawn.interval.max - PULSE_CONFIG.spawn.interval.min;
+                const random = Math.random();
+                // Enhanced natural timing distribution
+                return base + range * Math.pow(random, 2);
+            }
+
+            spawnNewPulse() {
+                if (this.isActive) {
+                    this.boundSpawnPulse();
+                    const nextInterval = this.getNextSpawnInterval();
+                    setTimeout(() => this.spawnNewPulse(), nextInterval);
+                }
+            }
+
+            start() {
+                if (this.isActive) return;
+                log('Starting animation with viewport optimization');
+                this.isActive = true;
+                this.lastTimestamp = 0;
+                this.frameCount = 0;
+                this.lastFpsUpdate = 0;
+                this.viewportBounds = this.getViewportBounds();
+                this.animationFrame = requestAnimationFrame(this.boundAnimate);
+                this.spawnNewPulse();
+                
+                // Start cleanup interval
+                this.cleanupInterval = setInterval(
+                    this.cleanupOffscreenPulses,
+                    PULSE_CONFIG.performance.cleanupInterval
+                );
+            }
+
+            stop() {
+                if (!this.isActive) return;
+                log('Stopping animation');
+                this.isActive = false;
+                if (this.animationFrame) {
+                    cancelAnimationFrame(this.animationFrame);
+                    this.animationFrame = null;
+                }
+            }
+
+            handleVisibilityChange() {
+                if (document.hidden) {
+                    this.stop();
+                } else {
+                    setTimeout(() => this.start(), 100); // Delay restart
+                }
+            }
+
+            cleanup() {
+                this.stop();
+                document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+                this.map.off('move', this.handleMapMove);
+                
+                if (this.cleanupInterval) {
+                    clearInterval(this.cleanupInterval);
+                    this.cleanupInterval = null;
+                }
+                
+                this.layerIds.forEach(id => {
+                    if (this.map.getLayer(id)) {
+                        this.map.removeLayer(id);
+                    }
+                });
+                this.layerIds = [];
+                this.pulses.clear();
+                this.pulsesPerRoad.clear();
+                log('Cleanup completed');
+            }
+        }
+
+
+        class MandalaManager {
+            constructor(map) {
+                this.map = map;
+                this.mandalas = new Map();
+                this.container = document.createElement('div');
+                this.container.style.position = 'absolute';
+                this.container.style.top = '0';
+                this.container.style.left = '0';
+                this.container.style.width = '100%';
+                this.container.style.height = '100%';
+                this.container.style.pointerEvents = 'none';
+                map.getContainer().appendChild(this.container);
+
+                // Enhanced layer configuration for maximum visibility
+                this.layerConfig = [
+                    // Outer rings with strong glow and high density
+                    { elements: 72, radius: 380, size: 6, animation: 'rotate 30s ease-in-out infinite', shape: 'circle', glow: true },
+                    { elements: 60, radius: 360, size: 6, animation: 'reverse-rotate 28s ease-in-out infinite', shape: 'circle', glow: true },
+                    { elements: 48, radius: 340, size: 6, animation: 'rotate 26s ease-in-out infinite', shape: 'circle', glow: true },
+                    { elements: 36, radius: 320, size: 6, animation: 'reverse-rotate 24s ease-in-out infinite', shape: 'circle', glow: true },
+
+                    // Middle geometric layers with larger elements
+                    { elements: 24, radius: 300, size: 10, animation: 'rotate 22s ease-in-out infinite', shape: 'triangle', glow: true },
+                    { elements: 12, radius: 260, size: 15, animation: 'reverse-rotate 20s ease-in-out infinite', shape: 'hexagon', glow: true },
+
+                    // Core glow layers with maximum visibility
+                    { elements: 6, radius: 240, size: 20, animation: 'pulse 18s ease-in-out infinite', shape: 'circle', glow: true },
+                    { elements: 3, radius: 200, size: 25, animation: 'rotate 16s ease-in-out infinite', shape: 'circle', glow: true }
+                ];
+
+                // Log layer configuration
+                console.log('Initializing layer configuration');
+                this.layerConfig.forEach((layer, index) => {
+                    console.log(
+                        'Layer ' + index + ': ' +
+                        'shape=' + layer.shape +
+                        ', elements=' + layer.elements +
+                        ', size=' + layer.size
+                    );
+                });
+
+                // Bind handlers
+                this.boundUpdatePositions = this.updatePositions.bind(this);
+                this.boundUpdateVisibility = this.updateVisibility.bind(this);
+                this.boundHandleMouseMove = this.handleMouseMove.bind(this);
+
+                // Attach event listeners
+                map.on('move', this.boundUpdatePositions);
+                map.on('zoom', this.boundUpdateVisibility);
+                map.getContainer().addEventListener('mousemove', this.boundHandleMouseMove);
+
+                console.log('MandalaManager initialization complete');
+            }
+
+            createMandala(landmark) {
+                console.log('Creating mandala for: ' + landmark.name);
+                const mandala = document.createElement('div');
+                mandala.className = 'mandala-container';
+                mandala.style.width = `${landmark.radius * 2}px`;
+                mandala.style.height = `${landmark.radius * 2}px`;
+
+                this.layerConfig.forEach((layer, layerIndex) => {
+                    const layerDiv = document.createElement('div');
+                    layerDiv.className = 'layer';
+                    layerDiv.style.animation = layer.animation;
+                    
+                    for(let i = 0; i < layer.elements; i++) {
+                        const element = document.createElement('div');
+                        element.className = 'shape';
+                        const angle = (i * 360) / layer.elements;
+                        const radians = (angle * Math.PI) / 180;
+                        
+                        // Position calculation
+                        const x = landmark.radius + Math.cos(radians) * layer.radius * (landmark.radius / 400);
+                        const y = landmark.radius + Math.sin(radians) * layer.radius * (landmark.radius / 400);
+                        
+                        // Apply positioning with string concatenation
+                        element.style.left = x + 'px';
+                        element.style.top = y + 'px';
+                        element.style.transform = 'rotate(' + angle + 'deg)';
+                        
+                        // Create animation string
+                        const animationDuration = 3 + (layerIndex % 3);
+                        const animationDelay = i * 0.02;
+                        element.style.animation = 'pulse ' + animationDuration + 's ' +
+                                                animationDelay + 's infinite';
+
+                        this.applyShapeStyle(element, layer, landmark.radius / 400);
+                        layerDiv.appendChild(element);
+                    }
+                    mandala.appendChild(layerDiv);
+                });
+
+                this.container.appendChild(mandala);
+                this.mandalas.set(landmark.name, { element: mandala, config: landmark });
+                console.log('Mandala created for: ' + landmark.name);
+            }
+
+            class MandalaManager {
+                constructor(map) {
+                    this.map = map;
+                    this.mandalas = new Map();
+                    this.container = document.createElement('div');
+                    this.container.className = 'mandala-container';
+                    this.map.getContainer().appendChild(this.container);
+
+                    // Performance settings
+                    this.frameInterval = 1000 / 17; // Target 17fps
+                    this.lastFrameTime = 0;
+                    this.memoryMode = 'normal';
+                    
+                    // Bind methods
+                    this.boundUpdatePositions = this.updatePositions.bind(this);
+                    this.boundUpdateVisibility = this.updateVisibility.bind(this);
+                    this.boundHandleMouseMove = this.handleMouseMove.bind(this);
+                    
+                    // Start monitoring
+                    this.startPerformanceMonitoring();
+                }
+
+                    // Performance monitoring
+                    this.mode = 'NORMAL';
+                    this.lastUpdate = 0;
+                    this.frameInterval = 1000 / 17; // Target 17fps
+                    this.performanceStats = {
+                        lastCheck: 0,
+                        frameCount: 0,
+                        fps: 0
+                    };
+
+                    // Bind event handlers
+                    this.boundUpdatePositions = this.updatePositions.bind(this);
+                    this.boundUpdateVisibility = this.updateVisibility.bind(this);
+                    this.boundHandleMouseMove = this.handleMouseMove.bind(this);
+
+                    // Initialize performance monitoring
+                    this.initPerformanceMonitoring();
+
+                    // Bind methods
+                    this.boundUpdatePositions = this.updatePositions.bind(this);
+                    this.boundUpdateVisibility = this.updateVisibility.bind(this);
+                    this.boundHandleMouseMove = this.handleMouseMove.bind(this);
+                }
+
+                initPerformanceMonitoring() {
+                    setInterval(() => {
+                        if (!performance || !performance.memory) return;
+                        const memUsage = performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit;
+                        this.#memoryMode = memUsage > 0.8 ? 'critical' : memUsage > 0.5 ? 'low' : 'normal';
+                        console.log('Memory mode:', this.#memoryMode, 'Usage:', (memUsage * 100).toFixed(1) + '%');
+                    }, 2000);
+                }
+
+            isInDelhiRegion(coordinates) {
+                const bounds = {
+                    north: 28.88,
+                    south: 28.40,
+                    east: 77.35,
+                    west: 76.85
+                };
+                
+                return coordinates.lat >= DELHI_BOUNDS.south &&
+                       coordinates.lat <= DELHI_BOUNDS.north &&
+                       coordinates.lng >= DELHI_BOUNDS.west &&
+                       coordinates.lng <= DELHI_BOUNDS.east;
+            }
+
+            // Add memory mode management
+            checkMemoryMode() {
+                if (!performance || !performance.memory) return 'normal';
+                
+                const memoryUsage = performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit;
+                
+                if (memoryUsage > 0.8) return 'critical';
+                if (memoryUsage > 0.5) return 'low';
+                return 'normal';
+            }
+
+            applyShapeStyle(element, layer, scale) {
+                // Get current performance mode
+                const mode = this.checkMemoryMode();
+                console.log('Applying style:', layer.shape, 'Mode:', mode);
+
+                // Base size calculations with mode adjustments
+                const sizeScale = mode === 'critical' ? 0.7 : mode === 'low' ? 0.85 : 1;
+                const variation = mode === 'normal' ? Math.sin(Math.random() * Math.PI) * 0.15 : 0;
+                const adjustedSize = layer.size * scale * sizeScale * (1 + variation);
+
+                // Apply mode-specific styles
+                switch(mode) {
+                    case 'critical':
+                        element.style.cssText = [
+                            'animation: none',
+                            'filter: none',
+                            'box-shadow: none',
+                            'transition: none',
+                            'transform: scale(' + sizeScale + ')',
+                            'opacity: 0.8'
+                        ].join(';');
+                        break;
+
+                    case 'low':
+                        element.style.cssText = [
+                            'animation: ' + (layer.glow ? 'glow 4s linear infinite' : 'none'),
+                            'filter: brightness(1.1)',
+                            'transition: transform 0.5s ease',
+                            'box-shadow: 0 0 ' + (adjustedSize * 0.2) + 'px rgba(255,255,255,0.3)',
+                            'transform: scale(' + sizeScale + ')'
+                        ].join(';');
+                        break;
+
+                    default:
+                        // Normal mode - full effects
+                        console.log('Normal mode - full effects');
+                
+                        element.classList.add(layer.glow ? 'glow' : '');
+                        
+                        // Memory-aware effect scaling
+                        const memUsage = performance?.memory?.usedJSHeapSize / performance?.memory?.jsHeapSizeLimit || 0;
+                        const effectScale = memUsage > 0.8 ? 0 : memUsage > 0.5 ? 0.5 : 1;
+                        
+                        if (effectScale === 0) {
+                            // Critical memory mode - minimal effects
+                            element.style.cssText = 'transform: scale(0.8); transition: none;';
+                            return;
+                        }
+                        
+                        // Adjust effects based on memory usage
+                        const blurAmount = (0.1 + Math.random() * 0.1 * effectScale).toFixed(2);
+                        const brightnessAmount = (1.1 + Math.random() * 0.2 * effectScale).toFixed(2);
+                        const glowSize = layer.glow ? 1.5 * effectScale : 1;
+                        const glowIntensity = layer.glow ? 0.9 * effectScale : 0.7;
+                        
+                        // Build optimized styles
+                        const styles = {
+                            transition: effectScale < 1 ? 'transform 0.3s ease' : 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                            mixBlendMode: effectScale < 1 ? 'normal' : 'screen',
+                            filter: 'blur(' + blurAmount + 'px) brightness(' + brightnessAmount + ')',
+                            opacity: Math.min(0.98, 0.8 + effectScale * 0.18),
+                            boxShadow: effectScale < 1 ? 'none' :
+                                '0 0 ' + (adjustedSize * 0.3 * glowSize) + 'px rgba(255, 255, 255, ' + glowIntensity + ')'
+                        };
+                        
+                        Object.assign(element.style, styles);
+    
+    // Log with string concatenation
+    console.log(
+        'Applying style to ' + layer.shape +
+        ': size=' + adjustedSize.toFixed(1) +
+        ', glow=' + layer.glow
+    );
+
+
+                // Pre-declare variables used in switch statement
+                let circleSize, borderSize, triangleHeight, lineWidth, lineHeight, crossSize;
+                let crossRotation, hexSize, offset, dotSize;
+                
+                // Check if element is in Delhi region before applying animations
+                const isInDelhiRegion = this.isInDelhiRegion(config.coordinates);
+                
+                switch(layer.shape) {
+                    case 'circle':
+                        circleSize = adjustedSize * (layer.glow ? 1.4 : 1.2);
+                        element.style.width = circleSize + 'px';
+                        element.style.height = circleSize + 'px';
+                        element.style.borderRadius = '50%';
+                        
+                        // Setup dynamic animation timing
+                        // Setup animation
+                        // Only apply animations in Delhi region
+                        if (isInDelhiRegion) {
+                            const flowDuration = 1.5 + Math.random() + (layer.glow ? 0.5 : 0);
+                            element.style.animation = 'flow ' + flowDuration + 's ease-in-out infinite';
+                        }
+                        
+                        // Build radial gradient
+                        const circleGradientStops = [
+                            'circle at center',
+                            'rgba(255,255,255,1) 0%',
+                            'rgba(255,255,255,0.98) 30%',
+                            'rgba(255,255,255,0.95) 60%',
+                            'rgba(255,255,255,0.9) 100%'
+                        ];
+                        element.style.background = 'radial-gradient(' + circleGradientStops.join(', ') + ')';
+                        
+                        // Add extra glow for outer circles
+                        if (layer.glow) {
+                            const extraGlow = '0 0 ' + (circleSize * 0.5) + 'px rgba(255,255,255,0.8)';
+                            element.style.boxShadow += ', ' + extraGlow;
+                        }
+                        break;
+                    case 'triangle':
+                        // Enhanced triangle with better proportions
+                        const triangleHeight = adjustedSize * 2;
+                        element.style.width = '0';
+                        element.style.height = '0';
+                        const borderSize = (adjustedSize * 0.8).toFixed(1);
+                        element.style.borderLeft = borderSize + 'px solid transparent';
+                        element.style.borderRight = borderSize + 'px solid transparent';
+                        
+                        const opacity = (0.9 + Math.random() * 0.1).toFixed(2);
+                        element.style.borderBottom = triangleHeight + 'px solid rgba(255,255,255,' + opacity + ')';
+                        
+                        // Add shimmer effect
+                        if (layer.glow) {
+                            const glowDuration = (2 + Math.random()).toFixed(1);
+                            element.style.animation += ', glow ' + glowDuration + 's ease-in-out infinite';
+                        }
+                        break;
+                    case 'rhombus':
+                        element.style.width = adjustedSize + 'px';
+                        element.style.height = adjustedSize + 'px';
+                        const rotateAngle = (45 + variation * 10).toFixed(1);
+                        element.style.transform += ' rotate(' + rotateAngle + 'deg)';
+                        element.style.borderRadius = '2px';
+                        break;
+                    case 'line':
+                        // Line shape with dynamic dimensions
+                        const lineWidth = (adjustedSize * 6).toFixed(1);
+                        const lineHeight = (0.5 + Math.random() * 0.5).toFixed(1);
+                        element.style.width = lineWidth + 'px';
+                        element.style.height = lineHeight + 'px';
+                        element.style.transformOrigin = 'left center';
+                        element.style.opacity = (0.6 + Math.random() * 0.2).toFixed(2);
+                        break;
+                    case 'cross':
+                        // Cross shape with dynamic sizing
+                        const crossSize = (adjustedSize * (1 + Math.random() * 0.2)).toFixed(1);
+                        element.style.width = crossSize + 'px';
+                        element.style.height = (crossSize * 3).toFixed(1) + 'px';
+                        const crossRotation = (45 + variation * 5).toFixed(1);
+                        element.style.transform += ' rotate(' + crossRotation + 'deg)';
+                        element.style.borderRadius = '2px';
+                        element.style.backgroundColor = 'transparent';
+                        // Build cross shadow with string concatenation
+                        const shadowParts = [
+                            '0 ' + crossSize + 'px 2px rgba(255,255,255,0.8)',
+                            '0 -' + crossSize + 'px 2px rgba(255,255,255,0.8)'
+                        ];
+                        element.style.boxShadow = shadowParts.join(', ');
+                        break;
+                    case 'hexagon':
+                        // Performance tracking
+                        const startTime = performance.now();
+                        
+                        // Enhanced hexagon with calculated size
+                        const hexSize = adjustedSize * (layer.glow ? 2.5 : 2);
+                        element.style.width = hexSize + 'px';
+                        element.style.height = hexSize + 'px';
+                        
+                        // Smoother polygon with dynamic variations
+                        const offset = Math.sin(Date.now() / 1000) * variation;
+                        // Build polygon path using string concatenation
+                        const polygonPoints = [
+                            (50 + offset) + '% 0%',
+                            (100 + offset) + '% 25%',
+                            (100 + offset) + '% ' + (75 + variation) + '%',
+                            (50 + offset) + '% 100%',
+                            (0 - offset) + '% ' + (75 + variation) + '%',
+                            (0 - offset) + '% 25%'
+                        ];
+                        element.style.clipPath = 'polygon(' + polygonPoints.join(', ') + ')';
+                        
+                        // Build gradient string
+                        const hexGradientStops = [
+                            'circle at center',
+                            'rgba(255,255,255,1) 0%',
+                            'rgba(255,255,255,0.98) 40%',
+                            'rgba(255,255,255,0.95) 70%',
+                            'rgba(255,255,255,0.9) 100%'
+                        ];
+                        element.style.background = 'radial-gradient(' + hexGradientStops.join(', ') + ')';
+                        
+                        if (layer.glow) {
+                            // Build glow effect with string concatenation
+                            const glowParts = [
+                                '0 0 ' + (hexSize * 0.2) + 'px rgba(255,255,255,0.9)',
+                                '0 0 ' + (hexSize * 0.4) + 'px rgba(255,255,255,0.6)',
+                                '0 0 ' + (hexSize * 0.6) + 'px rgba(255,255,255,0.3)'
+                            ];
+                            element.style.boxShadow = glowParts.join(', ');
+                            
+                            // Set animation with string concatenation
+                            const rotateDuration = (15 + Math.random() * 5).toFixed(1);
+                            element.style.animation = 'rotate ' + rotateDuration + 's linear infinite';
+                        }
+                        
+                        // Log performance with string concatenation
+                        const renderTime = performance.now() - startTime;
+                        if (renderTime > 1) {
+                            console.log('Hexagon render time: ' + renderTime.toFixed(2) + 'ms');
+                        }
+                        break;
+                    case 'square':
+                        element.style.width = adjustedSize + 'px';
+                        element.style.height = adjustedSize + 'px';
+                        const squareRotation = (45 + variation * 15).toFixed(1);
+                        element.style.transform += ' rotate(' + squareRotation + 'deg)';
+                        element.style.borderRadius = '1px';
+                        break;
+                    case 'dot':
+                        // Calculate dot dimensions
+                        const dotSize = (layer.size * scale).toFixed(1);
+                        element.style.width = dotSize + 'px';
+                        element.style.height = dotSize + 'px';
+                        
+                        // Build glow effect
+                        const dotGlow = '0 0 ' + (layer.size * 2 * scale).toFixed(1) + 'px #fff';
+                        element.style.boxShadow = dotGlow;
+                        element.style.borderRadius = '50%';
+                        break;
+                }
+            }
+
+            handleMouseMove(e) {
+                const currentTime = performance.now();
+                
+                // Frame rate control (17fps)
+                if (currentTime - (this.lastFrameTime || 0) < 1000 / 17) {
+                    return;
+                }
+                
+                if (this.mouseMoveTimeout) {
+                    cancelAnimationFrame(this.mouseMoveTimeout);
+                }
+
+                this.lastFrameTime = currentTime;
+                this.mouseMoveTimeout = requestAnimationFrame(() => {
+                    const memoryMode = this.checkMemoryMode();
+                    this.mandalas.forEach(({ element, config }) => {
+                        // Skip animations for elements outside Delhi or in critical memory mode
+                        if (!this.isInDelhiRegion(config.coordinates) || memoryMode === 'critical') {
+                            return;
+                        }
+                        const rect = element.getBoundingClientRect();
+                        const centerX = rect.left + rect.width / 2;
+                        const centerY = rect.top + rect.height / 2;
+                        
+                        // Enhanced distance and angle calculations
+                        const dx = e.clientX - centerX;
+                        const dy = e.clientY - centerY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        const angle = Math.atan2(dy, dx);
+                        
+                        // Smoothed interaction intensity
+                        const maxDistance = Math.max(window.innerWidth, window.innerHeight) / 2.5;
+                        const rawIntensity = Math.max(0, 1 - (distance / maxDistance));
+                        this.lastIntensity = this.lastIntensity || rawIntensity;
+                        const intensity = this.lastIntensity * 0.8 + rawIntensity * 0.2;
+                        this.lastIntensity = intensity;
+                        
+                        // Get current position from transform
+                        const point = this.map.project(config.coordinates);
+                        const radius = config.radius;
+
+                        // Enhanced organic movement
+                        const time = Date.now() / 1000;
+                        const rotationAmount = angle * (180 / Math.PI) * 0.1 * intensity;
+                        const scaleAmount = 1 + (Math.abs(Math.sin(time)) * 0.1 + Math.abs(dx) / maxDistance * 0.15) * intensity;
+                        const wave = Math.sin(time * 1.5) * 2 * intensity;
+                        
+                        // Apply base transform with smooth transitions
+                        element.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                        // Build main transform string with string concatenation
+                        const transformParts = [
+                            'translate3d(' + (point.x - radius) + 'px, ' + (point.y - radius) + 'px, 0)',
+                            'rotate3d(0, 0, 1, ' + (rotationAmount + wave) + 'deg)',
+                            'scale3d(' + scaleAmount + ', ' + scaleAmount + ', 1)',
+                            'perspective(2000px)',
+                            'rotate3d(' + (dy / distance) + ', ' + (-dx / distance) + ', 0, ' + (intensity * 20) + 'deg)'
+                        ];
+                        element.style.transform = transformParts.join(' ');
+
+                        // Enhanced layer animations
+                        element.querySelectorAll('.layer').forEach((layer, layerIndex) => {
+                            const layerTime = time + layerIndex * 0.1;
+                            // Remove unused layerIntensity variable
+                            const layerDepth = (layerIndex + 1) * 50 * intensity;
+                            const layerScale = 1 - layerIndex * 0.05;
+                            const layerRotation = (layerIndex % 2 ? -1 : 1) * layerTime * 20;
+                            
+                            // Build layer transform string
+                            const layerTransform = [
+                                'translateZ(' + layerDepth.toFixed(1) + 'px)',
+                                'rotate3d(0, 0, 1, ' + layerRotation.toFixed(1) + 'deg)',
+                                'scale3d(' + layerScale + ', ' + layerScale + ', 1)'
+                            ].join(' ');
+                            
+                            layer.style.transform = layerTransform;
+                        });
+
+                        // Performance tracking for shape updates
+                        let shapesProcessed = 0;  // Keep only the used variable
+                        
+                        // Memory-aware shape animations
+                        const memoryMode = this.checkMemoryMode();
+                        if (memoryMode === 'critical') {
+                            return; // Skip all shape animations in critical mode
+                        }
+
+                        element.querySelectorAll('.shape').forEach((shape, index) => {
+                            const shapeStart = performance.now();
+                            
+                            // Simplified calculations for low memory mode
+                            const shapeTime = time + (memoryMode === 'low' ? index * 0.2 : index * 0.1);
+                            const shapeIntensity = memoryMode === 'low' ?
+                                intensity * 0.5 :
+                                intensity * (1 + Math.sin(shapeTime) * 0.3);
+
+                            // Performance monitoring with thresholds
+                            const currentShapeTime = performance.now() - shapeStart;
+                            if (currentShapeTime > (memoryMode === 'low' ? 4 : 2)) {
+                                console.log(
+                                    'Shape ' + index + ' preparation took ' +
+                                    currentShapeTime.toFixed(2) + 'ms' +
+                                    ' (Mode: ' + memoryMode + ')'
+                                );
+                            }
+
+                            // Optimized movement calculations
+                            const orbitRadius = memoryMode === 'low' ? intensity : 2 * intensity;
+                            const orbitSpeed = memoryMode === 'low' ? 1 + (index % 2) : 2 + (index % 3);
+                            const orbitX = Math.cos(shapeTime * orbitSpeed) * orbitRadius;
+                            const orbitY = Math.sin(shapeTime * (orbitSpeed + 1)) * orbitRadius;
+                            const mouseX = dx * 0.02;
+                            const mouseY = dy * 0.02;
+                            
+                            // Calculate final movement combining orbit and mouse influence
+                            const finalMoveX = (mouseX + orbitX) * Math.sin(index * 0.1 + shapeTime);
+                            const finalMoveY = (mouseY + orbitY) * Math.cos(index * 0.1 + shapeTime);
+                            
+                            // Dynamic rotation and visual effects
+                            const rotationAngle = Math.sin(shapeTime + index * 0.2) * 15 * intensity;
+                            const depthOffset = index * intensity * 2;
+                            const glowStrength = Math.abs(finalMoveX + finalMoveY) * 0.2;
+                            const blurAmount = 0.3 + shapeIntensity * 0.4;
+                            const opacityValue = Math.min(1, 0.85 + (shapeIntensity * 0.15));
+                            
+                            // Apply styles with smooth transitions
+                            // Build transition string
+                            const transitionParts = [
+                                'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                                'opacity 0.3s ease-out',
+                                'filter 0.3s ease-out',
+                                'box-shadow 0.4s ease-out'
+                            ];
+                            shape.style.transition = transitionParts.join(', ');
+                            
+                            // Prepare transform string using concatenation
+                            // Build transform parts with string concatenation
+                            const translate = 'translate3d(' +
+                                finalMoveX.toFixed(2) + 'px, ' +
+                                finalMoveY.toFixed(2) + 'px, ' +
+                                depthOffset.toFixed(1) + 'px)';
+
+                            const rotate = 'rotate3d(' +
+                                Math.sin(shapeTime).toFixed(3) + ', ' +
+                                Math.cos(shapeTime).toFixed(3) + ', ' +
+                                '1, ' +
+                                rotationAngle.toFixed(1) + 'deg)';
+
+                            shape.style.transform = translate + ' ' + rotate;
+                            
+                            // Apply visual effects with performance tracking
+                            const effectsStart = performance.now();
+                            
+                            shape.style.filter = 'blur(' + blurAmount.toFixed(1) + 'px)';
+                            shape.style.opacity = opacityValue;
+                            
+                            const effectsTime = performance.now() - effectsStart;
+                            if (effectsTime > 1) {
+                                console.log(
+                                    'Visual effects for shape ' + index +
+                                    ' took ' + effectsTime.toFixed(2) + 'ms'
+                                );
+                            }
+                            // Build glow effect string
+                            const glowParts = [
+                                '0 0 ' + (2 + glowStrength).toFixed(1) + 'px rgba(255, 255, 255, ' +
+                                    (0.3 + glowStrength * 0.2).toFixed(2) + ')',
+                                '0 0 ' + (4 + glowStrength * 2).toFixed(1) + 'px rgba(255, 255, 255, ' +
+                                    (0.2 + glowStrength * 0.1).toFixed(2) + ')'
+                            ];
+                            shape.style.boxShadow = glowParts.join(', ');
+                        });
+                    });
+                });
+                
+                // Schedule next animation frame
+                this.lastAnimationTime = Date.now();
+            }
+
+            updatePositions() {
+                const perfStart = performance.now();
+                const memoryMode = this.checkMemoryMode();
+                
+                this.mandalas.forEach(({ element, config }) => {
+                    // Skip updates for elements outside Delhi
+                    if (!this.isInDelhiRegion(config.coordinates)) {
+                        element.style.display = 'none';
+                        return;
+                    }
+
+                    try {
+                        const point = this.map.project(config.coordinates);
+                        const radius = memoryMode === 'low' ? config.radius * 0.8 : config.radius;
+                        const translateX = (point.x - radius).toFixed(1);
+                        const translateY = (point.y - radius).toFixed(1);
+                        
+                        element.style.display = 'block';
+                        element.style.transform = 'translate(' +
+                            translateX + 'px, ' +
+                            translateY.toFixed(1) + 'px)';
+                    } catch (error) {
+                        log(`Error updating position for ${config.name}: ${error.message}`);
+                    }
+                });
+            }
+
+            updateVisibility() {
+                const zoom = this.map.getZoom();
+                console.log('Updating visibility - zoom level: ' + zoom.toFixed(2));
+
+                this.mandalas.forEach(({ element, config }) => {
+                    try {
+                        // Initialize base values
+                        let baseScale = 1;
+                        let opacity = config.baseOpacity;
+                        
+                        console.log('Processing mandala:', config.name,
+                            'Initial scale:', baseScale,
+                            'Initial opacity:', opacity);
+                        
+                        // Enhanced scale and visibility control
+                        if (zoom < 11) {
+                            // Calculate base values for low zoom
+                            const zoomFactor = 1 - ((zoom - 8) / 3);
+                            baseScale = 1.5 + Math.pow(zoomFactor, 1.5);
+                            opacity = Math.min(1, config.baseOpacity * 2);
+                            
+                            // Calculate glow effects
+                            const glowIntensity = Math.pow(11 - zoom, 1.2) * 0.3;
+                            const glowBase = Math.max(25, glowIntensity * 30);
+                            const blurAmount = Math.max(0.1, 0.3 - zoom * 0.05);
+                            const brightness = (1.4 + glowIntensity).toFixed(2);
+
+                            // Build filter string
+                            const filterStr = [
+                                'brightness(' + brightness + ')',
+                                'contrast(1.1)',
+                                'blur(' + blurAmount.toFixed(2) + 'px)',
+                                'saturate(1.1)'
+                            ].join(' ');
+                            element.style.filter = filterStr;
+
+                            // Build shadow string
+                            const shadowStr = [
+                                '0 0 ' + (glowBase * 0.4).toFixed(1) + 'px rgba(255, 255, 255, 0.8)',
+                                '0 0 ' + (glowBase * 0.8).toFixed(1) + 'px rgba(255, 255, 255, 0.6)',
+                                '0 0 ' + (glowBase * 1.6).toFixed(1) + 'px rgba(255, 255, 255, 0.4)',
+                                '0 0 ' + (glowBase * 2.4).toFixed(1) + 'px rgba(255, 255, 255, 0.2)'
+                            ].join(', ');
+                            element.style.boxShadow = shadowStr;
+
+                            // Log performance data
+                            console.log(
+                                'Enhanced visibility -',
+                                'Scale:', baseScale.toFixed(2),
+                                'Glow:', glowIntensity.toFixed(2),
+                                'Brightness:', brightness
+                            );
+                            
+                            // Performance logging with string concatenation
+                            const lowZoomTime = performance.now() - lowZoomStart;
+                            console.log(
+                                config.name + ' low zoom (' + zoom.toFixed(1) +
+                                ') - scale: ' + baseScale.toFixed(2) +
+                                ', glow: ' + glowIntensity.toFixed(2) +
+                                ', time: ' + lowZoomTime.toFixed(1) + 'ms'
+                            );
+
+                        } else if (zoom > 11) {
+                            // Gradual fade out at higher zoom levels
+                            baseScale = 1 + Math.pow(zoom - 11, 0.8) * 0.1;
+                            opacity = config.baseOpacity * Math.max(0, Math.pow((14 - zoom) / 3, 1.2));
+                            element.style.filter = 'brightness(1)';
+                            element.style.boxShadow = 'none';
+                        } else {
+                            // Enhanced default state at zoom 11
+                            baseScale = 1.2;
+                            opacity = config.baseOpacity * 1.2;
+                            element.style.filter = 'brightness(1.2) blur(0.2px)';
+                            element.style.boxShadow = 'none';
+                        }
+
+                        // Apply base transform settings
+                        element.style.transformOrigin = 'center center';
+                        element.style.opacity = opacity;
+                        
+                        // Log visibility state with concatenation
+                        console.log('Mandala ' + config.name +
+                            ' - zoom: ' + zoom.toFixed(2) +
+                            ', scale: ' + baseScale.toFixed(2) +
+                            ', opacity: ' + opacity.toFixed(2));
+                        
+                        // Adjust animations with fixed string values
+                        const speedMultiplier = Math.max(0.7, Math.min(1.3, 1 + (11 - zoom) * 0.1));
+                        element.querySelectorAll('.layer').forEach((layer, index) => {
+                            const layerScale = baseScale * (1 - index * 0.05);
+                            // Remove unused layerOpacity calculation
+                            const layerDepth = index * 5 * (zoom < 11 ? (11 - zoom) : 1);
+                            
+                            // Apply transform with string concatenation
+                            layer.style.transformOrigin = 'center center';
+                            layer.style.transform =
+                                'scale(' + layerScale.toFixed(3) + ') ' +
+                                'translateZ(' + layerDepth.toFixed(1) + 'px) ' +
+                                (index % 2 ? 'rotate(-2deg)' : 'rotate(2deg)');
+                            
+                            // Update animation if present
+                            const currentAnimation = layer.style.animation;
+                            if (currentAnimation) {
+                                const [name, duration] = currentAnimation.split(' ');
+                                const adjustedDuration = parseFloat(duration) * speedMultiplier;
+                                
+                                // Build animation string with concatenation
+                                const animStr =
+                                    name + ' ' + adjustedDuration + 's ease-in-out infinite' + ', ' +
+                                    'glow ' + (3 + index) + 's ease-in-out infinite ' + (index * 0.5) + 's';
+                                layer.style.animation = animStr;
+                            }
+                            
+                            // Layer effects at low zoom using string concatenation
+                            if (zoom < 11) {
+                                const glowStrength = (11 - zoom) * 0.15;
+                                const brightness = (1.1 + glowStrength).toFixed(2);
+                                const blur = (0.2 + glowStrength * 0.3).toFixed(2);
+                                layer.style.filter =
+                                    'brightness(' + brightness + ') ' +
+                                    'blur(' + blur + 'px)';
+                            }
+                        });
+
+                    } catch (error) {
+                        // Error logging with concatenation
+                        console.error('Error updating visibility for ' + config.name + ': ' + error.message);
+                    }
+                });
+
+                const totalTime = performance.now() - startTime;
+                console.log('Visibility update completed in ' + totalTime.toFixed(1) + 'ms');
+            }
+
+            initialize() {
+                console.log('Starting mandala initialization...');
+                DELHI_LANDMARKS.forEach(landmark => {
+                    console.log('Creating mandala for:', landmark.name);
+                    this.createMandala(landmark);
+                });
+                this.updatePositions();
+                this.updateVisibility();
+                
+                // Add mouse move handler for interactive effects
+                this.map.getContainer().addEventListener('mousemove', this.boundHandleMouseMove);
+                console.log('Mandala initialization complete');
+            }
+
+            cleanup() {
+                console.log('Starting MandalaManager cleanup...');
+                
+                // Remove event listeners
+                this.map.off('move', this.boundUpdatePositions);
+                this.map.off('zoom', this.boundUpdateVisibility);
+                this.map.getContainer().removeEventListener('mousemove', this.boundHandleMouseMove);
+                
+                // Clean up animations
+                this.mandalas.forEach(({ element }) => {
+                    element.querySelectorAll('.layer').forEach(layer => {
+                        layer.style.animation = 'none';
+                        layer.style.transform = 'none';
+                    });
+                    element.style.transform = 'none';
+                });
+
+                // Remove elements
+                this.container.remove();
+                this.mandalas.clear();
+                console.log('MandalaManager cleanup completed successfully');
+            }
+        }
+
+
+        function initializeMap() {
+            try {
+                console.log('Map initialization starting - running diagnostics');
+                
+                // Monitor device and performance capabilities
+                // Log device diagnostics using concatenation
+                var diagnostics = [
+                    'Device and Performance Diagnostics:',
+                    '- Hardware Concurrency: ' + (navigator.hardwareConcurrency || 'N/A'),
+                    '- Device Memory: ' + (navigator.deviceMemory || 'N/A') + 'GB',
+                    '- Connection Type: ' + (navigator.connection ? navigator.connection.effectiveType : 'N/A'),
+                    '- Screen Resolution: ' + window.innerWidth + 'x' + window.innerHeight,
+                    '- Device Pixel Ratio: ' + window.devicePixelRatio
+                ].join('\n');
+                console.log(diagnostics);
+
+                // Error handler with string concatenation
+                window.onerror = function(msg, url, line, col, error) {
+                    console.error('Global error: ' + msg + ' at ' + url + ':' + line + ':' + col);
+                    return false;
+                };
+
+                // Promise rejection handler with string concatenation
+                window.onunhandledrejection = function(event) {
+                    console.error('Unhandled Promise rejection: ' + event.reason);
+                };
+
+                console.log('Creating map instance...');
+                const map = new maplibregl.Map({
+                    container: 'map',
+                    style: {
+                        version: 8,
+                        sources: {
+                            openmaptiles: {
+                                type: 'vector',
+                                // Construct URL with string concatenation
+                                url: 'https://api.maptiler.com/tiles/v3/tiles.json?key=' + API_KEY
+                            }
+                        },
+                        layers: [
+                            // Background layer
+                            {
+                                id: 'background',
+                                type: 'background',
+                                paint: { 'background-color': '#000510' }
+                            },
+                            // Combined water layer with glow
+                            {
+                                id: 'water',
+                                type: 'fill',
+                                source: 'openmaptiles',
+                                'source-layer': 'water',
+                                paint: {
+                                    'fill-color': [
+                                        'interpolate',
+                                        ['linear'],
+                                        ['zoom'],
+                                        8, '#001433',
+                                        12, '#001940',
+                                        16, '#002352'
+                                    ],
+                                    'fill-opacity': 0.8,
+                                    'fill-outline-color': '#0066FF'
+                                }
+                            },
+                            // Base buildings
+                            {
+                                id: 'buildings',
+                                type: 'fill',
+                                source: 'openmaptiles',
+                                'source-layer': 'building',
+                                paint: {
+                                    'fill-color': [
+                                        'interpolate',
+                                        ['linear'],
+                                        ['zoom'],
+                                        8, '#1A0F0F',  // Very dark maroon
+                                        12, '#2A1515', // Dark maroon
+                                        16, '#3A1F1F'  // Medium maroon
+                                    ],
+                                    'fill-opacity': [
+                                        'interpolate',
+                                        ['linear'],
+                                        ['zoom'],
+                                        8, 0.7,
+                                        12, 0.8,
+                                        16, 0.9
+                                    ],
+                                    'fill-outline-color': '#661A1A', // Darker maroon outline
+                                    'fill-antialias': true,
+                                    'fill-translate': [0.5, 0.5],
+                                    'fill-translate-anchor': 'viewport'
+                                }
+                            },
+
+
+                            // Primary glow (dark green)
+                            {
+                                id: 'building-glow-1',
+                                type: 'line',
+                                source: 'openmaptiles',
+                                'source-layer': 'building',
+                                paint: {
+                                    'line-color': '#003322', // Dark green base
+                                    'line-width': [
+                                        'interpolate',
+                                        ['linear'],
+                                        ['zoom'],
+                                        8, 2,
+                                        12, 3,
+                                        16, 4
+                                    ],
+                                    'line-opacity': 0.4,
+                                    'line-blur': 2
+                                }
+                            },
+                            // Secondary glow (neon accent)
+                            {
+                                id: 'building-glow-2',
+                                type: 'line',
+                                source: 'openmaptiles',
+                                'source-layer': 'building',
+                                paint: {
+                                    'line-color': '#00FF66', // Neon green accent
+                                    'line-width': [
+                                        'interpolate',
+                                        ['linear'],
+                                        ['zoom'],
+                                        8, 1,
+                                        12, 1.5,
+                                        16, 2
+                                    ],
+                                    'line-opacity': 0.2,
+                                    'line-blur': 1
+                                }
+                            }
+                        ]
+                    },
+                    // Map configuration
+                    // Performance-optimized configuration
+                    const APP_CONFIG = {
+                        performance: {
+                            targetFps: 17,
+                            maxMemoryMB: 256,
+                            lowMemoryThreshold: 0.8,
+                            criticalMemoryThreshold: 0.9
+                        },
+                        map: {
+                            center: DELHI_COORDINATES,
+                            zoom: 11,
+                            minZoom: 8,
+                            maxZoom: 16,
+                            antialias: true,
+                            preserveDrawingBuffer: true,
+                            maxParallelImageRequests: 8
+                        }
+                    };
+
+                    Object.assign(map.getContainer().style, {
+                        backgroundColor: '#000510',
+                        willChange: 'transform'
+                    });
+
+                    // Apply optimized settings
+                    Object.assign(map, APP_CONFIG.map);
+
+                    // Set up frame rate limiting
+                    const frameInterval = 1000 / APP_CONFIG.performance.targetFps;
+                    let lastFrameTime = 0;
+
+                    // Throttle render calls
+                    const originalRender = map._render;
+                    map._render = function() {
+                        const now = performance.now();
+                        if (now - lastFrameTime >= frameInterval) {
+                            lastFrameTime = now;
+                            originalRender.call(this);
+                        }
+                    };
+
+                map.on('load', function() {
+                    console.log('Map loading complete - checking status');
+                    
+                    try {
+                        console.log('Basic map initialization successful');
+                        
+                        // Initialize road animations
+                        console.log('Starting road animation manager initialization');
+                        const animator = new RoadAnimationManager(map);
+                        animator.initialize();
+                        console.log('Road animation manager initialization complete');
+
+                        // Initialize mandalas
+                        console.log('Starting mandala manager initialization');
+                        const mandalaManager = new MandalaManager(map);
+                        mandalaManager.initialize();
+                        console.log('Mandala manager initialization complete');
+
+                        map.on('remove', () => {
+                            console.log('Map cleanup initiated - releasing resources');
+                            animator.cleanup();
+                            mandalaManager.cleanup();
+                        });
+
+                        // Performance monitoring with string concatenation
+                        const perfMonitor = setInterval(() => {
+                            if (performance && performance.memory) {
+                                const memoryUsage = performance.memory.usedJSHeapSize / (1024 * 1024);
+                                const heapLimit = performance.memory.jsHeapSizeLimit / (1024 * 1024);
+                                
+                                // Performance stats
+                                var stats = [
+                                    'Performance stats:',
+                                    '- Memory usage: ' + Math.round(memoryUsage) + 'MB / ' + Math.round(heapLimit) + 'MB',
+                                    '- Active pulses: ' + animator.pulses.size,
+                                    '- Active mandalas: ' + mandalaManager.mandalas.size,
+                                    '- FPS: ' + animator.fps
+                                ].join('\n');
+                                console.log(stats);
+
+                                // Performance management
+                                if (memoryUsage > PULSE_CONFIG.performance.maxMemoryMB * 0.85) {
+                                    console.log('High memory usage - optimizing effects');
+                                    PULSE_CONFIG.trail.length = Math.max(8, PULSE_CONFIG.trail.length - 1);
+                                    PULSE_CONFIG.spawn.maxActive = Math.max(12, PULSE_CONFIG.spawn.maxActive - 1);
+                                    PULSE_CONFIG.performance.batchSize = Math.max(3, PULSE_CONFIG.performance.batchSize - 1);
+                                } else if (memoryUsage < PULSE_CONFIG.performance.maxMemoryMB * 0.7 && this.fps > 28) {
+                                    console.log('Performance optimal - enhancing effects');
+                                    PULSE_CONFIG.trail.length = Math.min(15, PULSE_CONFIG.trail.length + 1);
+                                    PULSE_CONFIG.spawn.maxActive = Math.min(18, PULSE_CONFIG.spawn.maxActive + 1);
+                                } else {
+                                    console.log('Performance stable - maintaining settings');
+                                }
+                            }
+                        }, 3000); // Check more frequently
+
+                        map.on('remove', function() {
+                            console.log('Cleaning up performance monitor');
+                            clearInterval(perfMonitor);
+                        });
+                    } catch (error) {
+                        // Error handling with string concatenation
+                        console.error('Error in map initialization: ' + error.message);
+                        console.error('Details:', error);
+                    }
+                });
+
+                // Map error handler
+                map.on('error', function(e) {
+                    var errorMsg = e.error ? e.error.message : 'Unknown error';
+                    console.error('Map error: ' + errorMsg);
+                    console.error('Details:', e);
+                });
+            } catch (error) {
+                console.error('Error initializing map: ' + error.message);
+                console.error('Details:', error);
+            }
+        }
+
+        window.addEventListener('load', initializeMap);
+    </script>
+</body>
+</html>

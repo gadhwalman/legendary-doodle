@@ -1,0 +1,97 @@
+/* =====================
+   Base Styles
+   ===================== */
+body {
+  margin: 0;
+  padding: 0;
+  background: #0a0e17;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #000;
+}
+
+#map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#debug {
+  position: absolute;
+  bottom: 40px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #00ff99;
+  padding: 10px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+  max-width: 400px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 2;
+}
+
+.map-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at center,
+    transparent 0%,
+    rgba(10, 14, 23, 0.3) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Mandala container */
+.mandala-container {
+  position: relative;
+  width: 800px;
+  height: 800px;
+}
+
+/* Layer styles */
+.layer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transform-origin: center;
+}
+
+/* Shape styles */
+.shape {
+  position: absolute;
+  transition: all 0.4s ease-out;
+  background-color: #fff;
+  mix-blend-mode: lighten;
+}
+
+/* Animations */
+@keyframes rotate { 
+  from { transform: rotate(0deg); } 
+  to { transform: rotate(360deg); } 
+}
+
+@keyframes reverse-rotate { 
+  from { transform: rotate(360deg); } 
+  to { transform: rotate(0deg); } 
+}
+
+@keyframes pulse { 
+  0% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.9; }
+}
+
+@keyframes dash {
+  to { stroke-dashoffset: -100; }
+}
